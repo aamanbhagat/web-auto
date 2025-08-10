@@ -374,6 +374,19 @@ async def run_once(url: str, instance_id: int, browser, state: InstanceState) ->
         
         page = await context.new_page()
         
+        # Block images, fonts, and media to save bandwidth
+        await page.route("**/*", lambda route: (
+            route.abort() if route.request.resource_type in [
+                "image", "font", "media", "stylesheet", 
+                "manifest", "other"
+            ] or any(ext in route.request.url.lower() for ext in [
+                ".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".ico", ".bmp", ".tiff",
+                ".woff", ".woff2", ".ttf", ".otf", ".eot",
+                ".mp4", ".mp3", ".avi", ".mov", ".wmv", ".flv", ".webm", ".ogg",
+                ".css", ".less", ".sass", ".scss"
+            ]) else route.continue_()
+        ))
+        
         # Additional page-level stealth enhancements
         await page.evaluate("""
             // Override common automation detection points
